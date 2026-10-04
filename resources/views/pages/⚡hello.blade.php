@@ -1,10 +1,12 @@
 <?php
 
+use Validate\Attributes\Validate;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('はじめてのページ')] class extends Component {
-    public string $name = '祐也';
+    #[Validate('required|string|max:100')]
+    public string $name = '祐也'
 
     public int $count = 0;
 
