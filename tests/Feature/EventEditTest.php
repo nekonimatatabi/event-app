@@ -190,3 +190,55 @@ test('duplicate is forbidden when the user is not the owner', function () {
 
     expect(Event::count())->toBe(1);
 });
+
+test('event loaded with the cheapest price can be duplicated', function () {
+    $event = Event::factory()->has(TicketType::factory()->state(['price' => 1500]))->create();
+
+    $copy = Event::query()->withMin('ticketTypes', 'price')->findOrFail($event->id)->duplicate();
+
+    expect($copy->exists)->toBeTrue()
+        ->and($copy->ticketTypes()->count())->toBe(0);
+});
+
+test('guests cannot duplicate an event', function () {
+    $event = Event::factory()->create();
+
+    Livewire::test('pages::events.edit', ['event' => $event])
+        ->assertForbidden();
+
+    expect(Event::count())->toBe(1);
+});
+
+test('duplicated event belongs to the organizer and cannot be edited by others', function () {
+    $event = Event::factory()->create();
+    $otherUser = User::factory()->create();
+
+    $this->actingAs($event->user);
+    Livewire::test('pages::events.edit', ['event' => $event])
+        ->call('duplicate');
+
+    $copy = Event::query()->whereKeyNot($event->id)->sole();
+
+    expect($copy->isOwnedBy($event->user))->toBeTrue()
+        ->and($copy->isOwnedBy($otherUser))->toBeFalse();
+
+    $this->get(route('events.edit', $copy))->assertOk();
+
+    $this->actingAs($otherUser)
+        ->get(route('events.edit', $copy))
+        ->assertForbidden();
+});
+
+test('duplicating does not change events of other organizers', function () {
+    $event = Event::factory()->create();
+    $otherEvent = Event::factory()->create();
+    $otherEventTitle = $otherEvent->title;
+
+    $this->actingAs($event->user);
+    Livewire::test('pages::events.edit', ['event' => $event])
+        ->call('duplicate');
+
+    expect(Event::count())->toBe(3)
+        ->and($otherEvent->fresh()->title)->toBe($otherEventTitle)
+        ->and(Event::where('user_id', $otherEvent->user_id)->count())->toBe(1);
+});

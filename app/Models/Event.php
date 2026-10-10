@@ -62,15 +62,20 @@ class Event extends Model
     /**
      * 一番安い券種の価格を「1,500円〜」の形で返す。0 円なら「無料」、券種が無ければ「─」。
      *
-     * `withMin('ticketTypes', 'price')` で読み込んだ前提。
+     * 一覧のように `withMin('ticketTypes', 'price')` で読み込み済みならその値を使い、
+     * 未読み込みならその場で集計する（N+1 を避けるため、一覧では withMin を付けること）。
      */
     public function priceLabel(): string
     {
-        if ($this->ticket_types_min_price === null) {
+        $lowestPrice = array_key_exists('ticket_types_min_price', $this->attributes)
+            ? $this->ticket_types_min_price
+            : $this->ticketTypes()->min('price');
+
+        if ($lowestPrice === null) {
             return '─';
         }
 
-        $lowestPrice = (int) $this->ticket_types_min_price;
+        $lowestPrice = (int) $lowestPrice;
 
         return $lowestPrice === 0 ? '無料' : number_format($lowestPrice).'円〜';
     }
@@ -82,7 +87,8 @@ class Event extends Model
     {
         $suffix = '（複製）';
 
-        $copy = $this->replicate();
+        // withMin で付いた集計用の属性は events テーブルに無いので、コピーから除く
+        $copy = $this->replicate(['ticket_types_min_price']);
         $copy->title = mb_substr($this->title, 0, 100 - mb_strlen($suffix)).$suffix;
         $copy->starts_at = $this->starts_at->copy()->addWeek();
         $copy->ends_at = $this->ends_at->copy()->addWeek();
