@@ -76,6 +76,22 @@ class Event extends Model
     }
 
     /**
+     * 開催日を1週間後にした複製を作る。タイトルの末尾に「（複製）」を付け、券種はコピーしない。
+     */
+    public function duplicate(): self
+    {
+        $suffix = '（複製）';
+
+        $copy = $this->replicate();
+        $copy->title = mb_substr($this->title, 0, 100 - mb_strlen($suffix)).$suffix;
+        $copy->starts_at = $this->starts_at->copy()->addWeek();
+        $copy->ends_at = $this->ends_at->copy()->addWeek();
+        $copy->save();
+
+        return $copy;
+    }
+
+    /**
      * ログイン中のユーザーが作ったイベントか。
      */
     public function isOwnedBy(?User $user): bool
