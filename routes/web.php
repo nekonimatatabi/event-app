@@ -13,4 +13,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/events/{event}/edit', 'pages::events.edit')->name('events.edit');
 });
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

@@ -8,14 +8,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-
 
 /**
  * @property int $id
@@ -61,14 +60,14 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
     }
+
     /**
-      * 自分が作ったイベント。
-      *
-      * @return HasMany<Event, $this>
-      */
+     * 自分が作ったイベント。
+     *
+     * @return HasMany<Event, $this>
+     */
     public function events(): HasMany
     {
-    return $this->hasMany(Event::class);
+        return $this->hasMany(Event::class);
     }
 }
-
