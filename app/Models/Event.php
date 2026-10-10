@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $ends_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int|null $ticket_types_min_price
  */
 #[Fillable(['user_id', 'title', 'description', 'venue', 'starts_at', 'ends_at'])]
 class Event extends Model
@@ -56,6 +57,22 @@ class Event extends Model
     public function ticketTypes(): HasMany
     {
         return $this->hasMany(TicketType::class);
+    }
+
+    /**
+     * 一番安い券種の価格を「1,500円〜」の形で返す。0 円なら「無料」、券種が無ければ「─」。
+     *
+     * `withMin('ticketTypes', 'price')` で読み込んだ前提。
+     */
+    public function priceLabel(): string
+    {
+        if ($this->ticket_types_min_price === null) {
+            return '─';
+        }
+
+        $lowestPrice = (int) $this->ticket_types_min_price;
+
+        return $lowestPrice === 0 ? '無料' : number_format($lowestPrice).'円〜';
     }
 
     /**
